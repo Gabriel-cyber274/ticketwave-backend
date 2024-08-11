@@ -13,7 +13,8 @@ class EventCost extends Model
     protected $fillable = [
         'event_id',
         'level',
-        'cost'
+        'cost',
+        'available'
     ];
 
 

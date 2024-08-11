@@ -11,21 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('events', function (Blueprint $table) {
+        Schema::create('carts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')
                 ->constrained('users')
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
-            $table->string('event_title');
-            $table->string('event_website')->nullable();
-            $table->string('venue_details');
-            $table->string('event_category');
-            $table->text('organizer_details');
-            $table->text('event_description');
-            $table->dateTime('event_start');
-            // $table->dateTime('event_end');
-            $table->string('event_image')->nullable();
+            $table->foreignId('event_id')
+                ->constrained('events')
+                ->onUpdate('cascade')
+                ->onDelete('cascade');
+            $table->integer('quantity');
+            $table->integer('ticket_cost');
+            $table->string('ticket_type');
+            $table->boolean('paid');
             $table->timestamps();
         });
     }
@@ -35,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('events');
+        Schema::dropIfExists('carts');
     }
 };

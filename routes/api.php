@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\UserController;
@@ -46,6 +47,17 @@ Route::group(['middleware'=> ['auth:sanctum']], function () {
 
     Route::get('/my-registrations', [RegisterController::class, 'GetAllMyRegistrations']);
     Route::get('/popular-events', [EventController::class, 'popularEvents']);
+
+
+
+    Route::get('/carts', [CartController::class, 'index']);
+    Route::post('/carts', [CartController::class, 'store']);
+    Route::get('/carts/{id}', [CartController::class, 'show']);
+    Route::post('/carts/{id}', [CartController::class, 'update']);
+    Route::delete('/carts/{id}', [CartController::class, 'destroy']);
+
+
+    
 
 
 

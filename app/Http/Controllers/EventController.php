@@ -9,6 +9,8 @@ use App\Models\EventTag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
@@ -56,7 +58,7 @@ class EventController extends Controller
     public function myEvents()
     {
         $id = auth()->id();
-        $event = Event::with(['costs', 'tags'])->where('user_id', $id)->get();
+        $event = Event::with(['costs', 'tags', 'registrations'])->where('user_id', $id)->get();
 
         return response([
             'event' => $event,
@@ -75,16 +77,17 @@ class EventController extends Controller
             'event_title'=> 'required|string',
             'venue_details'=> 'required|string',
             'event_website'=> 'nullable|string',
-            'event_cost' => 'required|array',
+            // 'event_cost' => 'required|array',
             'event_cost.*.level' => 'required|string',
             'event_cost.*.cost' => 'required|numeric',
-            'event_tag' => 'required|array',
+            'event_cost.*.available' => 'required|numeric',
+            // 'event_tag' => 'required|array',
             'event_tag.*.name' => 'required|string',
             'event_description' => 'required',
             'organizer_details' => 'required',
             'event_start' => 'required',
             'event_category'=>'required|string',
-            'event_end' => 'required',
+            // 'event_end' => 'required',
             // 'event_image' => 'nullable',
         ]);
         
@@ -98,7 +101,7 @@ class EventController extends Controller
         }
 
         try {
-            $user = auth()->user();
+            $user = Auth()->user();
 
             if ($request->hasFile('event_image')) {
                 $image = $request->file('event_image');
@@ -115,25 +118,31 @@ class EventController extends Controller
                 'event_description' => $request->event_description,
                 'organizer_details' => $request->organizer_details,
                 'event_start' => $request->event_start,
-                'event_end' => $request->event_end,
+                // 'event_end' => $request->event_end,
                 'event_image' => $request->hasFile('event_image')?$imageUrl:null,
             ]);
 
             
+
+            Log::info($request->event_cost);
+
             // if($event) {
-                $costData = $request->event_cost;
+                // $costData = $request->event_cost;
+                $costData = json_decode($request->event_cost, true);
                 foreach ($costData as $data) {
                     EventCost::create([
                         'event_id' => $event->id,
                         'level' => $data['level'],
-                        'cost' => $data['cost']
+                        'cost' => $data['cost'],
+                        'available' => $data['available']
                     ]);
                 }
 
 
 
 
-                $tagData = $request->event_tag;
+                // $tagData = $request->event_tag;
+                $tagData = json_decode($request->event_tag, true);
     
                 
                 foreach ($tagData as $data) {
@@ -173,7 +182,7 @@ class EventController extends Controller
     public function show($id)
     {
         try {
-            $event = Event::with(['costs', 'tags'])->findorfail($id);
+            $event = Event::with(['costs', 'tags', 'registrations'])->findorfail($id);
             
             return response([
                 'event' => $event,
@@ -271,6 +280,7 @@ class EventController extends Controller
         $fields = Validator::make($request->all(),[
             'level'=> 'required|string',
             'cost'=> 'required',
+            'available'=>'required'
         ]);
         
         if($fields->fails()) {
@@ -289,7 +299,8 @@ class EventController extends Controller
             if($checkEvent->user_id == $userId) {
                 $cost->update([
                     'level' => $request->level,
-                    'cost' => $request->cost
+                    'cost' => $request->cost,
+                    'available'=> $request->available
                 ]);
 
                 

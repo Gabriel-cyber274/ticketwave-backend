@@ -20,7 +20,7 @@ class Event extends Model
         'organizer_details',
         'event_description',
         'event_start',
-        'event_end',
+        // 'event_end',
         'event_image'
     ];
 
