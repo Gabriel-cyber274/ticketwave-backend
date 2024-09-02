@@ -40,14 +40,14 @@ class verifyEmail extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $verificationUrl = config('app.url') . '/verify-email?' . http_build_query([
+        $verificationUrl = config('app.url') . '/login?' . http_build_query([
             'token' => $this->token,
             'email' => $this->user->email,
         ]);
 
         return (new MailMessage)
                 ->subject('Verify Your Email Address')
-                ->line('Dear ' . $this->user->name)
+                ->line('Dear ' . $this->user->fullname)
                 ->line('Please click the button below to verify your email address.')
                 ->action('Verify Email Address', $verificationUrl)
                 ->line('Thank you for using our application!');

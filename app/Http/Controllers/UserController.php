@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Notifications\VerifyAccount;
 use App\Notifications\verifyEmail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\PersonalAccessToken;
 
 
@@ -61,7 +63,9 @@ class UserController extends Controller
 
     public function Register (Request $request) {
         $fields = Validator::make($request->all(),[
-            'fullname'=> 'required|string',
+            // 'fullname'=> 'required|string',
+            'first_name'=> 'required|string',
+            'last_name'=> 'required|string',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password'=> 'required|string|min:8',
             'password_confirmation'=> 'required|string|min:8|same:password'
@@ -78,7 +82,9 @@ class UserController extends Controller
 
 
         $user = User::create([
-            'fullname'=> Str::title($request['fullname']),
+            'first_name' => Str::title($request['first_name']),
+            'last_name' => Str::title($request['last_name']),
+            'fullname'=> Str::title($request['last_name']).' '.Str::title($request['first_name']),
             'email'=> $request['email'],
             'password' => bcrypt($request['password']),
             'agree' => $request['agree']
@@ -247,7 +253,6 @@ class UserController extends Controller
     
         $token = $user->createToken('Email Verification Token', ['*'], Carbon::now()->addMinutes(30))->plainTextToken;
     
-        // Mail::to($user->email)->send(new VerifyEmail($user, $token));
         
         $user->notify(new verifyEmail($user, $token));
     
@@ -275,16 +280,27 @@ class UserController extends Controller
         }
 
         $user = User::where('email', $request->email)->get()->first();
-        
-        $token = $user->createToken('Personal Access Token', [])->plainTextToken;
 
         if($user) {
-            $response = [
-                'email'=> $user->email,
-                'token'=> $token,
-                'message'=> 'user retrieved successfully',
-                'success' => true
-            ];
+            try {
+                $token = $user->createToken('Personal Access Token', [])->plainTextToken;
+                
+                $user->notify(new VerifyAccount($user, $token));
+                $response = [
+                    'email'=> $user->email,
+                    'token'=> $token,
+                    'message'=> 'user retrieved successfully',
+                    'success' => true
+                ];
+            } catch (\Throwable $th) {
+                $response = [
+                    'message'=> $th->getMessage(),
+                    'success' => false
+                ];
+        
+                return response($response);
+                
+            }
     
             return response($response);
         }else {
@@ -300,6 +316,7 @@ class UserController extends Controller
 
     public function ChangePassword(Request $request) {
         $fields = Validator::make($request->all(), [
+            'email'=> 'required',
             'password' => 'required|string|min:8',
             'password_confirmation' => 'required|string|min:8|same:password'
         ]);
@@ -313,15 +330,16 @@ class UserController extends Controller
             return response($response);
         }
     
-        $user = auth()->user();
+        // $user = auth()->user();
+        $user = User::where('email', $request->email)->get()->first();
     
         if ($user) {
-            if (is_null($user->email_verified_at)) {
-                return response([
-                    'message' => 'Email address not verified',
-                    'success' => false
-                ], 403);
-            }
+            // if (is_null($user->email_verified_at)) {
+            //     return response([
+            //         'message' => 'Email address not verified',
+            //         'success' => false
+            //     ]);
+            // }
     
             $mainUser = User::find($user->id);
             $mainUser->update([
@@ -369,12 +387,12 @@ class UserController extends Controller
                 ], 401);
             }
     
-            if (is_null($user->email_verified_at)) {
-                return response([
-                    'message' => 'Email address not verified',
-                    'success' => false
-                ], 403);
-            }
+            // if (is_null($user->email_verified_at)) {
+            //     return response([
+            //         'message' => 'Email address not verified',
+            //         'success' => false
+            //     ], 403);
+            // }
     
             $mainUser = User::findOrFail($user->id);
     
@@ -395,6 +413,25 @@ class UserController extends Controller
                 'error' => $e->getMessage(),
                 'success' => false
             ], 500);
+        }
+    }
+
+    public function userDetails() {
+        $meId = Auth()->id();
+        
+        try {
+            $user = User::with(['event', 'registrations'])->findOrFail($meId);
+    
+            return response([
+                'user' => $user,
+                'message' => 'user info retrieved successfully',
+                'success' => true,
+            ], 200);
+        } catch (\Throwable $th) {
+            return response([
+                'message' => $th->getMessage(),
+                'success' => false,
+            ], 200);
         }
     }
     

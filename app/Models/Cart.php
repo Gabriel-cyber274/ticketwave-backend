@@ -15,7 +15,8 @@ class Cart extends Model
         'quantity',
         'paid',
         'ticket_cost',
-        'ticket_type'
+        'ticket_type', 
+        'available'
     ];
 
     

@@ -19,10 +19,13 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'first_name',
+        'last_name',
         'fullname',
         'email',
         'agree',
         'password',
+        'account_balance'
     ];
 
     /**
@@ -44,6 +47,11 @@ class User extends Authenticatable
      public function event()
      {
         return $this->hasMany(Event::class, 'user_id');
+     }
+
+     public function notifications()
+     {
+        return $this->hasMany(Notification::class, 'user_id');
      }
 
 

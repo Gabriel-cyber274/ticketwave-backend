@@ -47,8 +47,6 @@ class EventController extends Controller
             'message' => 'popular events retrieved successfully',
             'success' => true,
         ], 200);
-
-
     } 
 
 
@@ -118,7 +116,7 @@ class EventController extends Controller
                 'event_description' => $request->event_description,
                 'organizer_details' => $request->organizer_details,
                 'event_start' => $request->event_start,
-                // 'event_end' => $request->event_end,
+                'event_end' => $request->event_end,
                 'event_image' => $request->hasFile('event_image')?$imageUrl:null,
             ]);
 
@@ -209,7 +207,7 @@ class EventController extends Controller
             'event_description' => 'required',
             'organizer_details' => 'required',
             'event_start' => 'required',
-            'event_end' => 'required',
+            // 'event_end' => 'required',
             'event_image' => 'nullable',
         ]);
         

@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('organizer_details');
             $table->text('event_description');
             $table->dateTime('event_start');
-            // $table->dateTime('event_end');
+            $table->dateTime('event_end')->nullable();
             $table->string('event_image')->nullable();
             $table->timestamps();
         });

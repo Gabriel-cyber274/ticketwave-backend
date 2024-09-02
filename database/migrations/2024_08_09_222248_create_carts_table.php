@@ -25,6 +25,7 @@ return new class extends Migration
             $table->integer('ticket_cost');
             $table->string('ticket_type');
             $table->boolean('paid');
+            $table->integer('available');
             $table->timestamps();
         });
     }

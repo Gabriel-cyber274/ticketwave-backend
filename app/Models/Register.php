@@ -13,7 +13,10 @@ class Register extends Model
         'user_id',
         'event_id',
         'ticket_type',
+        'ticket_quantity',
         'ticket_cost',
+        'reference',
+        'transaction'
     ];
 
 

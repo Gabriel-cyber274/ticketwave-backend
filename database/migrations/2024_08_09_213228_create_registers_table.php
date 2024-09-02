@@ -23,6 +23,9 @@ return new class extends Migration
                 ->onDelete('cascade');
             $table->string('ticket_type');
             $table->integer('ticket_cost');
+            $table->integer('ticket_quantity');
+            $table->string('reference');
+            $table->string('transaction');
             $table->timestamps();
         });
     }
