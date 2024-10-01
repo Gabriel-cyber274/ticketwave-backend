@@ -12,14 +12,29 @@ class Notification extends Model
     protected $fillable = [
         'user_id',
         'description',
-        'title'
+        'title',
+        'is_read',
+        'event_id',
+        'customer_id',
+        'withdraw_id',
+
     ];
 
 
-    
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+
+    protected function casts(): array
+    {
+        return [
+            'is_read' => 'boolean',
+            'event_id' => 'integer',
+            'customer_id' => 'integer',
+            'withdraw_id' => 'integer'
+        ];
+    }
 }

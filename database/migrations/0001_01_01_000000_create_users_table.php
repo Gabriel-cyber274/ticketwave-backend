@@ -19,7 +19,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('profile_pic')->nullable();
             $table->boolean('agree')->nullable();
+            $table->string('bank')->nullable();
+            $table->string('acc_no')->nullable();
+            $table->boolean('admin')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

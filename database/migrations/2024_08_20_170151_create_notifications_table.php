@@ -18,7 +18,11 @@ return new class extends Migration
                 ->onUpdate('cascade')
                 ->onDelete('cascade');
             $table->string('description');
+            $table->integer('event_id')->nullable();
+            $table->integer('customer_id')->nullable();
+            $table->integer('withdraw_id')->nullable();
             $table->string('title');
+            $table->boolean('is_read')->default(false);
             $table->timestamps();
         });
     }

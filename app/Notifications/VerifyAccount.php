@@ -39,7 +39,7 @@ class VerifyAccount extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        
+
         $verificationUrl = config('app.url') . '/forget-password?' . http_build_query([
             'token' => $this->token,
             'email' => $this->user->email,

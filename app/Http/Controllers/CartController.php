@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\Event;
 use App\Models\Register;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+
 
 class CartController extends Controller
 {
@@ -20,7 +23,7 @@ class CartController extends Controller
         $cartInit = Cart::with(['user', 'event'])->where('user_id', $medId)->where('paid', 0)->get();
         $sortedEvent = collect($cartInit)->sortByDesc('id');
         $cart = $sortedEvent->values()->all();
-    
+
         return response([
             'cart' => $cart,
             'message' => 'cart retrieved successfully',
@@ -37,7 +40,7 @@ class CartController extends Controller
     //         'ticket_cost' => 'required',
     //         'ticket_type'=> 'required'
     //     ]);
-        
+
     //     if($fields->fails()) {
     //         $response = [
     //             'errors'=> $fields->errors(),
@@ -71,50 +74,67 @@ class CartController extends Controller
 
     public function store(Request $request)
     {
-        $fields = Validator::make($request->all(),[
-            'tickets.*.event_id' => 'required|numeric',
-            'tickets.*.quantity' => 'required|numeric',
-            'tickets.*.ticket_cost' => 'required|numeric',
+        $fields = Validator::make($request->all(), [
+            'tickets.*.event_id' => 'required|numeric|exists:events,id',
+            'tickets.*.quantity' => 'required|numeric|min:1', // Ensure quantity is at least 1
+            'tickets.*.ticket_cost' => 'required|numeric|min:0', // Ensure the cost is non-negative
             'tickets.*.ticket_type' => 'required|string',
-            'tickets.*.available' => 'required|numeric',
+            'tickets.*.available' => 'required|numeric|min:0', // Ensure available is non-negative
         ]);
-        
-        if($fields->fails()) {
+
+        if ($fields->fails()) {
             return response([
                 'errors' => $fields->errors(),
                 'success' => false
-            ], 400);
+            ], 422);
         }
 
         $medId = Auth()->id();
-        
         $tickets = $request->tickets;
 
-        foreach ($tickets as $ticket) {
-            Cart::create([
-                'user_id' => $medId,
-                'event_id' => $ticket['event_id'],
-                'quantity' => $ticket['quantity'],
-                'paid' => false,
-                'ticket_cost' => $ticket['ticket_cost'],
-                'ticket_type' => $ticket['ticket_type'],
-                'available' => $ticket['available']
-            ]);
-        }
+        try {
+            DB::beginTransaction(); // Start a transaction
 
-        return response([
-            'message' => 'Carts added successfully',
-            'success' => true,
-        ], 200);
+            foreach ($tickets as $ticket) {
+                $checkEvent = Event::find($ticket['event_id']);
+
+                if (!$checkEvent || !$checkEvent->is_accepted) {
+                    return response([
+                        'message' => "Event with ID {$ticket['event_id']} does not exist or is not accepted.",
+                        'success' => false,
+                    ], 400);
+                }
+
+                Cart::create([
+                    'user_id' => $medId,
+                    'event_id' => $ticket['event_id'],
+                    'quantity' => $ticket['quantity'],
+                    'paid' => false,
+                    'ticket_cost' => $ticket['ticket_cost'],
+                    'ticket_type' => $ticket['ticket_type'],
+                    'available' => $ticket['available']
+                ]);
+            }
+
+            DB::commit(); // Commit the transaction
+            return response([
+                'message' => 'Carts added successfully',
+                'success' => true,
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback in case of error
+            return response([
+                'message' => 'An error occurred while adding carts.',
+                'success' => false,
+            ], 500);
+        }
     }
 
 
-    /**
-     * Display the specified resource.
-     */
+
     public function show($id)
     {
-        try {    
+        try {
             $cart = Cart::with(['user', 'event'])->findOrFail($id);
 
             return response([
@@ -122,35 +142,33 @@ class CartController extends Controller
                 'message' => 'cart retrieved successfully',
                 'success' => true,
             ], 200);
-
         } catch (\Throwable $th) {
             return response([
                 'message' => $th->getMessage(),
                 'success' => false,
             ], 200);
         }
-
     }
 
 
     public function update(Request $request, $id)
     {
-        
-        $fields = Validator::make($request->all(),[
+
+        $fields = Validator::make($request->all(), [
             'quantity' => 'required',
             'paid' => 'nullable'
         ]);
-        
-        if($fields->fails()) {
+
+        if ($fields->fails()) {
             $response = [
-                'errors'=> $fields->errors(),
+                'errors' => $fields->errors(),
                 'success' => false
             ];
 
             return response($response);
         }
-        
-        try {    
+
+        try {
             $cart = Cart::with(['user', 'event'])->findOrFail($id);
 
             $cart->update([
@@ -161,13 +179,12 @@ class CartController extends Controller
             Log::info($request->paid);
 
 
-            
+
             return response([
                 'cart' => $cart,
                 'message' => 'cart updated successfully',
                 'success' => true,
             ], 200);
-
         } catch (\Throwable $th) {
             return response([
                 'message' => $th->getMessage(),
@@ -209,7 +226,6 @@ class CartController extends Controller
                 'message' => 'Carts updated successfully',
                 'success' => true,
             ], 200);
-
         } catch (\Throwable $th) {
             return response([
                 'message' => $th->getMessage(),
@@ -224,7 +240,7 @@ class CartController extends Controller
      */
     public function destroy($id)
     {
-        try {    
+        try {
             $cart = Cart::with(['user', 'event'])->findOrFail($id);
 
             $cart->delete();
@@ -233,7 +249,6 @@ class CartController extends Controller
                 'message' => 'cart deleted successfully',
                 'success' => true,
             ], 200);
-
         } catch (\Throwable $th) {
             return response([
                 'message' => $th->getMessage(),

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Event extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
 
     protected $fillable = [
@@ -21,7 +22,8 @@ class Event extends Model
         'event_description',
         'event_start',
         'event_end',
-        'event_image'
+        'event_image',
+        'is_accepted',
     ];
 
 
@@ -37,7 +39,7 @@ class Event extends Model
     }
 
 
-    
+
     public function tags()
     {
         return $this->hasMany(EventTag::class, 'event_id');
@@ -46,8 +48,6 @@ class Event extends Model
 
     public function registrations()
     {
-       return $this->hasMany(Register::class, 'event_id');
+        return $this->hasMany(Register::class, 'event_id');
     }
-
-    
 }

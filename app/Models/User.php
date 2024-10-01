@@ -25,7 +25,11 @@ class User extends Authenticatable
         'email',
         'agree',
         'password',
-        'account_balance'
+        'admin',
+        'profile_pic',
+        'account_balance',
+        'bank',
+        'acc_no'
     ];
 
     /**
@@ -44,21 +48,36 @@ class User extends Authenticatable
      * @return array<string, string>
      */
 
-     public function event()
-     {
+    public function event()
+    {
         return $this->hasMany(Event::class, 'user_id');
-     }
+    }
 
-     public function notifications()
-     {
+    public function notifications()
+    {
         return $this->hasMany(Notification::class, 'user_id');
-     }
+    }
 
 
-     public function registrations()
-     {
+    public function registrations()
+    {
         return $this->hasMany(Register::class, 'user_id');
-     }
+    }
+
+
+    public function withdraws()
+    {
+        return $this->hasMany(withdraw::class, 'user_id');
+    }
+
+
+
+    public function volunteer()
+    {
+        return $this->hasOne(Volunteer::class, 'user_id');
+    }
+
+
 
 
 
@@ -67,6 +86,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'admin' => 'boolean'
         ];
     }
 }
