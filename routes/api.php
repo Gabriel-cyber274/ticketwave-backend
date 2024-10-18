@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\DepositController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RegisterController;
@@ -85,13 +86,32 @@ Route::get('/popular-events', [EventController::class, 'popularEvents']);
 
 Route::get('/events/{id}', [EventController::class, 'show']);
 
+Route::get('/events-set-categories', [EventController::class, 'getSetEventCategory']);
+Route::get('/events-by-categories/{category}', [EventController::class, 'getEventByCategory']);
+
+Route::get('/events-by-name/{name}', [EventController::class, 'searchEventByName']);
+
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/user/change-userdetails', [UserController::class, 'changeDetails']);
     Route::get('/user-details', [UserController::class, 'userDetails']);
 
+    Route::post('/avatar', [UserController::class, 'updateAvatar']);
+
+
+
+
+
+
+
 
     Route::get('/my-events', [EventController::class, 'myEvents']);
+
+
+
+
+
+
     Route::post('/events', [EventController::class, 'store']);
     Route::post('/events/{id}', [EventController::class, 'update']);
     Route::delete('/events/{id}', [EventController::class, 'destroy']);
@@ -101,7 +121,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/events-cost/{id}', [EventController::class, 'deleteCost']);
     Route::post('/events-cost/add/{eventId}', [EventController::class, 'addEventCost']);
     Route::get('/categories', [EventController::class, 'Categories']);
-
 
 
 
@@ -167,6 +186,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/testimonials/{id}', [testimonyController::class, 'show']);
     Route::post('/testimonials/{id}', [testimonyController::class, 'update']);
     Route::delete('/testimonials/{id}', [testimonyController::class, 'destroy']);
+
+
+
+    Route::get('/deposits', [DepositController::class, 'index']);
+    Route::get('/deposits/{id}', [DepositController::class, 'show']);
+    Route::post('/deposits/{id}', [DepositController::class, 'update']);
+    Route::delete('/deposits/{id}', [DepositController::class, 'destroy']);
 
 
 

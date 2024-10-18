@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Deposit;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\withdraw;
 use App\Notifications\VerifyAccount;
 use App\Notifications\VerifyAdminAccount;
 use App\Notifications\verifyEmail;
@@ -497,32 +499,55 @@ class UserController extends Controller
 
     public function allAdminRevenue()
     {
-        $amount = User::sum('account_balance');
+        try {
+            // $amount = User::sum('account_balance');
 
-        $users = User::all();
+            $depositTotal = Deposit::sum('amount');
+            $withdrawTotal = Withdraw::where('is_accepted', true)->sum('amount');
 
-        return response([
-            'users' => $users,
-            'total_balance' => $amount,
-            'message' => 'volunteer deleted successfully',
-            'success' => true,
-        ], 200);
+            $users = User::all();
+
+            return response([
+                'users' => $users,
+                'total_balance' => $depositTotal - $withdrawTotal,
+                'message' => 'Operation completed successfully',
+                'success' => true,
+            ], 200);
+        } catch (\Exception $e) {
+            return response([
+                'message' => 'An error occurred: ' . $e->getMessage(),
+                'success' => false,
+            ], 500);
+        }
     }
 
     public function adminRevenueByDate($date)
     {
-        $users = User::with(['event', 'registrations'])
-            ->whereDate('created_at', $date)
-            ->get();
+        try {
 
-        $totalBalance = $users->sum('account_balance');
+            $users = User::with(['event', 'registrations'])
+                ->whereDate('created_at', $date)
+                ->get();
 
-        return response([
-            'users' => $users,
-            'total_balance' => $totalBalance,
-            'message' => 'Revenue and users fetched successfully',
-            'success' => true,
-        ], 200);
+            $depositTotal = Deposit::whereDate('created_at', $date)->sum('amount');
+            $withdrawTotal = Withdraw::where('is_accepted', true)->whereDate('created_at', $date)->sum('amount');
+
+            // Optional: Uncomment this if you want to sum user balances
+            // $totalBalance = $users->sum('account_balance');
+
+            // Return the response
+            return response([
+                'users' => $users,
+                'total_balance' => $depositTotal - $withdrawTotal,
+                'message' => 'Revenue and users fetched successfully',
+                'success' => true,
+            ], 200);
+        } catch (\Exception $e) {
+            return response([
+                'message' => 'An error occurred: ' . $e->getMessage(),
+                'success' => false,
+            ], 500);
+        }
     }
 
 
@@ -584,5 +609,37 @@ class UserController extends Controller
             'message' => 'logged out',
             'success' => true
         ];
+    }
+
+
+    public function updateAvatar(Request $request)
+    {
+        $fields = Validator::make($request->all(), [
+            'avatar_id' => 'required',
+        ]);
+
+        if ($fields->fails()) {
+            $response = [
+                'errors' => $fields->errors(),
+                'success' => false
+            ];
+
+            return response($response);
+        }
+
+        $userId = auth()->id();
+
+        $user = User::find($userId);
+
+        $user->update([
+            'avatar_id' => $request->avatar_id
+        ]);
+
+
+        return response([
+            'user' => $user,
+            'message' => 'avatar updated successfully',
+            'success' => true
+        ], 200);
     }
 }

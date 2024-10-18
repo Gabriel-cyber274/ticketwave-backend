@@ -591,4 +591,55 @@ class EventController extends Controller
             'success' => true,
         ], 200);
     }
+
+
+
+
+    public function getSetEventCategory()
+    {
+        $events = Event::with(['costs', 'tags', 'registrations'])
+            ->where('is_accepted', true)
+            ->get();
+
+        $eventCategories = $events->pluck('event_category')->unique();
+
+        $categories = Category::whereIn('name', $eventCategories)->get();
+
+        return response()->json([
+            'categories' => $categories,
+            'message' => 'event category retrieved successfully',
+            'success' => true,
+        ], 200);
+    }
+
+
+    public function getEventByCategory($category)
+    {
+        $events = Event::with(['costs', 'tags', 'registrations'])
+            ->where('is_accepted', true)
+            ->where('event_category', $category)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'events' => $events,
+            'message' => 'events retrieved successfully',
+            'success' => true,
+        ], 200);
+    }
+
+    public function searchEventByName($name)
+    {
+        $events = Event::with(['costs', 'tags', 'registrations'])
+            ->where('is_accepted', true)
+            ->where('event_title', 'like', '%' . $name . '%')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'events' => $events,
+            'message' => 'events retrieved successfully',
+            'success' => true,
+        ], 200);
+    }
 }

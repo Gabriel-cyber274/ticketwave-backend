@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Deposit;
 use App\Models\Event;
 use App\Models\EventCost;
 use App\Models\Notification;
@@ -179,6 +180,12 @@ class RegisterController extends Controller
 
                 $cost->decrement('available', $data['ticket_quantity']);
 
+                Deposit::create([
+                    'user_id' => $event->user_id,
+                    'amount' => $data['ticket_cost'] * $data['ticket_quantity']
+                ]);
+
+                
                 $host->increment('account_balance', $data['ticket_cost'] * $data['ticket_quantity']);
 
 

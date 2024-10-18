@@ -29,7 +29,8 @@ class User extends Authenticatable
         'profile_pic',
         'account_balance',
         'bank',
-        'acc_no'
+        'acc_no',
+        'avatar_id'
     ];
 
     /**
@@ -86,7 +87,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'admin' => 'boolean'
+            'admin' => 'boolean',
+            'avatar_id' => 'integer'
         ];
     }
 }
