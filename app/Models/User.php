@@ -78,6 +78,12 @@ class User extends Authenticatable
         return $this->hasOne(Volunteer::class, 'user_id');
     }
 
+    
+    public function validated_tickets()
+    {
+        return $this->hasMany(ValidatedTicket::class, 'user_id');
+    }
+
 
 
 

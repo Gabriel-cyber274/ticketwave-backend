@@ -16,7 +16,8 @@ class Register extends Model
         'ticket_quantity',
         'ticket_cost',
         'reference',
-        'transaction'
+        'transaction',
+        'ticket_code',
     ];
 
 
@@ -26,10 +27,15 @@ class Register extends Model
     }
 
 
-    
+
     public function event()
     {
         return $this->belongsTo(Event::class);
     }
+    
 
+    public function validated_tickets()
+    {
+        return $this->hasOne(ValidatedTicket::class, 'register_id');
+    }
 }

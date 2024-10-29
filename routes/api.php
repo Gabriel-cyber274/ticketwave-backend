@@ -7,6 +7,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\testimonyController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ValidatedTicketController;
 use App\Http\Controllers\volunteerController;
 use App\Http\Controllers\WithdrawController;
 use Illuminate\Http\Request;
@@ -77,6 +78,10 @@ Route::post('/verify-email', [UserController::class, 'verifyEmail']);
 Route::post('/resend-verify-email', [UserController::class, 'resendVerificationEmail']);
 Route::post('/user/check-email', [UserController::class, 'checkEmail']);
 Route::post('/user/change-password', [UserController::class, 'ChangePassword']);
+
+Route::post('/event-login', [UserController::class, 'LoginEvent']);
+
+
 
 
 
@@ -195,6 +200,20 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/deposits/{id}', [DepositController::class, 'destroy']);
 
 
+    // signed_in users
+    Route::prefix('validated-tickets')->group(function () {
+        Route::get('/event/{event_id}', [ValidatedTicketController::class, 'allTypes']);
+
+        Route::get('/type/{type_id}/users', [ValidatedTicketController::class, 'allUsersForType']);
+
+        Route::post('/', [ValidatedTicketController::class, 'store']);
+
+        Route::get('/{id}', [ValidatedTicketController::class, 'show']);
+
+        Route::post('/{id}', [ValidatedTicketController::class, 'update']);
+
+        Route::delete('/{id}', [ValidatedTicketController::class, 'destroy']);
+    });
 
 
 

@@ -18,7 +18,7 @@ class EventCost extends Model
     ];
 
 
-    
+
     public function event()
     {
         return $this->belongsTo(Event::class);
@@ -26,4 +26,8 @@ class EventCost extends Model
 
 
 
+    public function validated_tickets()
+    {
+        return $this->hasMany(ValidatedTicket::class, 'type_id');
+    }
 }

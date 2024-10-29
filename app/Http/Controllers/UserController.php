@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Deposit;
+use App\Models\Event;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -64,6 +65,59 @@ class UserController extends Controller
 
         return response($response, 201);
     }
+
+
+    public function LoginEvent(Request $request)
+    {
+        $fields = Validator::make($request->all(), [
+            'email' => 'required|string|email|max:255',
+            'password' => 'required|string|min:8',
+            'event_code' => 'required'
+        ]);
+
+        if ($fields->fails()) {
+            $response = [
+                'errors' => $fields->errors(),
+                'success' => false
+            ];
+
+            return response($response);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response([
+                'message' => 'incorrect credentials',
+                'success' => false
+            ]);
+        }
+
+        $checkEvents = Event::where('event_code', $request->event_code)->get();
+
+        if (count($checkEvents) > 0 && $checkEvents->first()->user_id == $user->id) {
+            $token = $user->createToken('Personal Access Token', [])->plainTextToken;
+
+
+            $response = [
+                'user' => $user,
+                'token' => $token,
+                'event' => $checkEvents->first(),
+                'message' => 'logged in',
+                'success' => true
+            ];
+
+            return response($response);
+        } else {
+            $response = [
+                'message' => "you can't login to this event",
+                'success' => false
+            ];
+
+            return response($response);
+        }
+    }
+
 
     public function Register(Request $request)
     {

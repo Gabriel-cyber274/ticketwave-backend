@@ -8,6 +8,7 @@ use App\Models\EventCost;
 use App\Models\EventTag;
 use App\Models\Notification;
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -137,6 +138,8 @@ class EventController extends Controller
                 ], 200);
             }
 
+            $randomString = Str::random(4);
+
             $event = Event::create([
                 'user_id' => $user->id,
                 'event_title' => $request->event_title,
@@ -149,6 +152,10 @@ class EventController extends Controller
                 'event_end' => $request->event_end,
                 'event_image' => $imageUrl,
                 'is_accepted' => false,
+            ]);
+
+            $event->update([
+                'event_code' => 'event_' . $randomString . $event->id
             ]);
 
             $costData = json_decode($request->event_cost, true);
@@ -642,4 +649,8 @@ class EventController extends Controller
             'success' => true,
         ], 200);
     }
+
+
+    
+
 }

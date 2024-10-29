@@ -8,6 +8,7 @@ use App\Models\EventCost;
 use App\Models\Notification;
 use App\Models\Register;
 use App\Models\User;
+use Illuminate\Support\Str;
 use App\Models\withdraw;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
+
 
 
 class RegisterController extends Controller
@@ -162,7 +165,9 @@ class RegisterController extends Controller
 
         try {
             foreach ($registerData as $data) {
-                Register::create([
+                $randomString = Str::random(4);
+
+                $register = Register::create([
                     'user_id' => $meId,
                     'event_id' => $data['event_id'],
                     'ticket_type' => $data['ticket_type'],
@@ -172,8 +177,13 @@ class RegisterController extends Controller
                     'transaction' => $data['transaction'],
                 ]);
 
+                $register->update([
+                    'ticket_code' => 'ticket_' . $randomString . $register->id
+                ]);
+
                 $event = Event::findOrFail($data['event_id']);
                 $host = User::findOrFail($event->user_id);
+                $me = User::findOrFail($meId);
                 $myInfo = User::findOrFail($meId);
 
                 $cost = EventCost::where('event_id', $data['event_id'])->where('level', $data['ticket_type'])->get()->first();
@@ -185,8 +195,142 @@ class RegisterController extends Controller
                     'amount' => $data['ticket_cost'] * $data['ticket_quantity']
                 ]);
 
-                
+
                 $host->increment('account_balance', $data['ticket_cost'] * $data['ticket_quantity']);
+
+
+                Mail::send([], [], function ($message) use ($me, $register, $event) {
+                    $message->to($me->email)
+                        ->subject('Your Ticket Purchase Confirmation')
+                        ->html('
+                            <html>
+                                <head>
+                                    <style>
+                                        body {
+                                            font-family: Arial, sans-serif;
+                                            color: #333;
+                                        }
+                                        .container {
+                                            max-width: 600px;
+                                            margin: 0 auto;
+                                            padding: 20px;
+                                            border: 1px solid #e0e0e0;
+                                            border-radius: 5px;
+                                            background-color: #f9f9f9;
+                                        }
+                                        .header {
+                                            text-align: center;
+                                            margin-bottom: 20px;
+                                        }
+                                        .header h2 {
+                                            color: #4CAF50;
+                                        }
+                                        .details {
+                                            margin-bottom: 20px;
+                                        }
+                                        .details p {
+                                            margin: 5px 0;
+                                        }
+                                        .footer {
+                                            text-align: center;
+                                            margin-top: 20px;
+                                            font-size: 0.9em;
+                                            color: #666;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <div class="container">
+                                        <div class="header">
+                                            <h2>Ticket Purchase Confirmation</h2>
+                                        </div>
+                                        <div class="details">
+                                            <p>Dear ' . $me->last_name . ',</p>
+                                            <p>Thank you for your purchase! Here are your ticket details:</p>
+                                            <p><strong>Event:</strong> ' . $event->event_title . '</p>
+                                            <p><strong>Ticket Type:</strong> ' . $register->ticket_type . '</p>
+                                            <p><strong>Ticket Quantity:</strong> ' . $register->ticket_quantity . '</p>
+                                            <p><strong>Ticket Cost:</strong> #' . ($register->ticket_cost * $register->ticket_quantity) . '</p>
+                                            <p><strong>Ticket Code:</strong> ' . $register->ticket_code . '</p>
+                                            <p>We hope you enjoy the event!</p>
+                                        </div>
+                                        <div class="footer">
+                                            <p>Best regards,</p>
+                                            <p>The TicketWave Team</p>
+                                        </div>
+                                    </div>
+                                </body>
+                            </html>
+                        ');
+                });
+
+
+                Mail::send([], [], function ($message) use ($host, $register, $event, $me) {
+                    $message->to($host->email)
+                        ->subject('Ticket Purchase Notification')
+                        ->html('
+                            <html>
+                                <head>
+                                    <style>
+                                        body {
+                                            font-family: Arial, sans-serif;
+                                            color: #333;
+                                        }
+                                        .container {
+                                            max-width: 600px;
+                                            margin: 0 auto;
+                                            padding: 20px;
+                                            border: 1px solid #e0e0e0;
+                                            border-radius: 5px;
+                                            background-color: #f9f9f9;
+                                        }
+                                        .header {
+                                            text-align: center;
+                                            margin-bottom: 20px;
+                                        }
+                                        .header h2 {
+                                            color: #4CAF50;
+                                        }
+                                        .details {
+                                            margin-bottom: 20px;
+                                        }
+                                        .details p {
+                                            margin: 5px 0;
+                                        }
+                                        .footer {
+                                            text-align: center;
+                                            margin-top: 20px;
+                                            font-size: 0.9em;
+                                            color: #666;
+                                        }
+                                    </style>
+                                </head>
+                                <body>
+                                    <div class="container">
+                                        <div class="header">
+                                            <h2>Ticket Purchase Notification</h2>
+                                        </div>
+                                        <div class="details">
+                                            <p>Dear ' . $host->last_name . ',</p>
+                                            <p>We are pleased to inform you that a ticket has been successfully purchased for your event.</p>
+                                            <p><strong>Event Title:</strong> ' . $event->event_title . '</p>
+                                            <p><strong>Purchaser:</strong> ' . $me->fullname . '</p>
+                                            <p><strong>Ticket Type:</strong> ' . $register->ticket_type . '</p>
+                                            <p><strong>Ticket Quantity:</strong> ' . $register->ticket_quantity . '</p>
+                                            <p><strong>Total Cost:</strong> #' . ($register->ticket_cost * $register->ticket_quantity) . '</p>
+                                            <p><strong>Ticket Code:</strong> ' . $register->ticket_code . '</p>
+                                            <p>Thank you for hosting this event, and we hope it will be a great success!</p>
+                                        </div>
+                                        <div class="footer">
+                                            <p>Best regards,</p>
+                                            <p>The TicketWave Team</p>
+                                        </div>
+                                    </div>
+                                </body>
+                            </html>
+                        ');
+                });
+
 
 
                 Notification::create([
@@ -195,6 +339,8 @@ class RegisterController extends Controller
                     'is_read' => false,
                     'description' => 'You have successfully purchased “' . $event->event_title . ' Ticket ' . $data['ticket_quantity'] . ' for a sum of #' . $data['ticket_cost'] * $data['ticket_quantity'],
                 ]);
+
+
 
                 Notification::create([
                     'is_read' => false,

@@ -24,6 +24,7 @@ class Event extends Model
         'event_end',
         'event_image',
         'is_accepted',
+        'event_code'
     ];
 
 
