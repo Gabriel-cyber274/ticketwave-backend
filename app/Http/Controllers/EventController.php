@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
+
 
 use function PHPUnit\Framework\isNull;
 
@@ -188,6 +190,88 @@ class EventController extends Controller
                     'description' => $user->fullname . 'created an event and its pending',
                 ]);
             }
+
+
+            Mail::send([], [], function ($message) use ($user, $event) {
+                $message->to($user->email)
+                    ->subject('Your Event has Been Created Successfully')
+                    ->html('
+                        <html>
+                            <head>
+                                <style>
+                                    body {
+                                        font-family: Arial, sans-serif;
+                                        color: #333;
+                                        background-color: #f4f4f4;
+                                    }
+                                    .container {
+                                        max-width: 600px;
+                                        margin: 0 auto;
+                                        padding: 20px;
+                                        background-color: #fff;
+                                        border-radius: 5px;
+                                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                                    }
+                                    .header {
+                                        text-align: center;
+                                        padding-bottom: 20px;
+                                        border-bottom: 1px solid #e0e0e0;
+                                    }
+                                    .header h2 {
+                                        color: #4CAF50;
+                                    }
+                                    .content {
+                                        padding: 20px 0;
+                                    }
+                                    .content p {
+                                        margin: 10px 0;
+                                        line-height: 1.6;
+                                    }
+                                    .footer {
+                                        margin-top: 20px;
+                                        text-align: center;
+                                        font-size: 0.9em;
+                                        color: #666;
+                                    }
+                                    .event-details {
+                                        background-color: #f9f9f9;
+                                        padding: 10px;
+                                        border-radius: 5px;
+                                    }
+                                    .event-details p {
+                                        margin: 5px 0;
+                                        font-weight: bold;
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="container">
+                                    <div class="header">
+                                        <h2>Event Creation Confirmation</h2>
+                                    </div>
+                                    <div class="content">
+                                        <p>Dear ' . $user->name . ',</p>
+                                        <p>Thank you for creating an event with us! We are excited to help you bring your event to life. Below are the details of your newly created event:</p>
+                                        <div class="event-details">
+                                            <p><strong>Event Title:</strong> ' . $event->event_title . '</p>
+                                            <p><strong>Event Code:</strong> ' . $event->event_code . '</p>
+                                            <p><strong>Venue:</strong> ' . $event->venue_details . '</p>
+                                            <p><strong>Event Category:</strong> ' . $event->event_category . '</p>
+                                            <p><strong>Start Date:</strong> ' . $event->event_start . '</p>
+                                            <p><strong>Organizer:</strong> ' . $event->organizer_details . '</p>
+                                        </div>
+                                        <p>If you have any questions or need further assistance, please do not hesitate to contact us.</p>
+                                    </div>
+                                    <div class="footer">
+                                        <p>Best regards,</p>
+                                        <p>The TicketWave Team</p>
+                                    </div>
+                                </div>
+                            </body>
+                        </html>
+                    ');
+            });
+
 
 
 
@@ -649,8 +733,4 @@ class EventController extends Controller
             'success' => true,
         ], 200);
     }
-
-
-    
-
 }
