@@ -199,127 +199,88 @@ class RegisterController extends Controller
                 $host->increment('account_balance', $data['ticket_cost'] * $data['ticket_quantity']);
 
 
-                Mail::send([], [], function ($message) use ($me, $register, $event) {
+                // Generate QR code URL
+                $qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($register->ticket_code);
+
+
+                // Send email to the purchaser
+                Mail::send([], [], function ($message) use ($me, $register, $event, $qrCodeUrl) {
                     $message->to($me->email)
                         ->subject('Your Ticket Purchase Confirmation')
                         ->html('
-                            <html>
-                                <head>
-                                    <style>
-                                        body {
-                                            font-family: Arial, sans-serif;
-                                            color: #333;
-                                        }
-                                        .container {
-                                            max-width: 600px;
-                                            margin: 0 auto;
-                                            padding: 20px;
-                                            border: 1px solid #e0e0e0;
-                                            border-radius: 5px;
-                                            background-color: #f9f9f9;
-                                        }
-                                        .header {
-                                            text-align: center;
-                                            margin-bottom: 20px;
-                                        }
-                                        .header h2 {
-                                            color: #4CAF50;
-                                        }
-                                        .details {
-                                            margin-bottom: 20px;
-                                        }
-                                        .details p {
-                                            margin: 5px 0;
-                                        }
-                                        .footer {
-                                            text-align: center;
-                                            margin-top: 20px;
-                                            font-size: 0.9em;
-                                            color: #666;
-                                        }
-                                    </style>
-                                </head>
-                                <body>
-                                    <div class="container">
-                                        <div class="header">
-                                            <h2>Ticket Purchase Confirmation</h2>
-                                        </div>
-                                        <div class="details">
-                                            <p>Dear ' . $me->last_name . ',</p>
-                                            <p>Thank you for your purchase! Here are your ticket details:</p>
-                                            <p><strong>Event:</strong> ' . $event->event_title . '</p>
-                                            <p><strong>Ticket Type:</strong> ' . $register->ticket_type . '</p>
-                                            <p><strong>Ticket Quantity:</strong> ' . $register->ticket_quantity . '</p>
-                                            <p><strong>Ticket Cost:</strong> #' . ($register->ticket_cost * $register->ticket_quantity) . '</p>
-                                            <p><strong>Ticket Code:</strong> ' . $register->ticket_code . '</p>
-                                            <p>We hope you enjoy the event!</p>
-                                        </div>
-                                        <div class="footer">
-                                            <p>Best regards,</p>
-                                            <p>The TicketWave Team</p>
-                                        </div>
-                                    </div>
-                                </body>
-                            </html>
-                        ');
+                <html>
+                    <head>
+                        <style>
+                            body { font-family: Arial, sans-serif; color: #333; }
+                            .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px; background-color: #f9f9f9; }
+                            .header { text-align: center; margin-bottom: 20px; }
+                            .header h2 { color: #4CAF50; }
+                            .details { margin-bottom: 20px; }
+                            .details p { margin: 5px 0; }
+                            .footer { text-align: center; margin-top: 20px; font-size: 0.9em; color: #666; }
+                            .qr-code { text-align: center; margin-top: 20px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="header">
+                                <h2>Ticket Purchase Confirmation</h2>
+                            </div>
+                            <div class="details">
+                                <p>Dear ' . htmlspecialchars($me->last_name) . ',</p>
+                                <p>Thank you for your purchase! Here are your ticket details:</p>
+                                <p><strong>Event:</strong> ' . htmlspecialchars($event->event_title) . '</p>
+                                <p><strong>Ticket Type:</strong> ' . htmlspecialchars($register->ticket_type) . '</p>
+                                <p><strong>Ticket Quantity:</strong> ' . htmlspecialchars($register->ticket_quantity) . '</p>
+                                <p><strong>Ticket Cost:</strong> #' . htmlspecialchars($register->ticket_cost * $register->ticket_quantity) . '</p>
+                                <p><strong>Ticket Code:</strong> ' . htmlspecialchars($register->ticket_code) . '</p>
+                                <div class="qr-code">
+                                    <img src="' . $qrCodeUrl . '" alt="QR Code" />
+                                </div>
+                                <p>We hope you enjoy the event!</p>
+                            </div>
+                            <div class="footer">
+                                <p>Best regards,</p>
+                                <p>The TicketWave Team</p>
+                            </div>
+                        </div>
+                    </body>
+                </html>
+            ');
                 });
 
 
-                Mail::send([], [], function ($message) use ($host, $register, $event, $me) {
+                // Send email notification to the event host
+                Mail::send([], [], function ($message) use ($host, $me, $register, $event) {
                     $message->to($host->email)
-                        ->subject('Ticket Purchase Notification')
+                        ->subject('New Ticket Purchase Notification')
                         ->html('
                             <html>
                                 <head>
                                     <style>
-                                        body {
-                                            font-family: Arial, sans-serif;
-                                            color: #333;
-                                        }
-                                        .container {
-                                            max-width: 600px;
-                                            margin: 0 auto;
-                                            padding: 20px;
-                                            border: 1px solid #e0e0e0;
-                                            border-radius: 5px;
-                                            background-color: #f9f9f9;
-                                        }
-                                        .header {
-                                            text-align: center;
-                                            margin-bottom: 20px;
-                                        }
-                                        .header h2 {
-                                            color: #4CAF50;
-                                        }
-                                        .details {
-                                            margin-bottom: 20px;
-                                        }
-                                        .details p {
-                                            margin: 5px 0;
-                                        }
-                                        .footer {
-                                            text-align: center;
-                                            margin-top: 20px;
-                                            font-size: 0.9em;
-                                            color: #666;
-                                        }
+                                        body { font-family: Arial, sans-serif; color: #333; }
+                                        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px; background-color: #f9f9f9; }
+                                        .header { text-align: center; margin-bottom: 20px; }
+                                        .header h2 { color: #4CAF50; }
+                                        .details { margin-bottom: 20px; }
+                                        .details p { margin: 5px 0; }
+                                        .footer { text-align: center; margin-top: 20px; font-size: 0.9em; color: #666; }
                                     </style>
                                 </head>
                                 <body>
                                     <div class="container">
                                         <div class="header">
-                                            <h2>Ticket Purchase Notification</h2>
+                                            <h2>New Ticket Purchase Notification</h2>
                                         </div>
                                         <div class="details">
                                             <p>Dear ' . $host->last_name . ',</p>
-                                            <p>We are pleased to inform you that a ticket has been successfully purchased for your event.</p>
-                                            <p><strong>Event Title:</strong> ' . $event->event_title . '</p>
-                                            <p><strong>Purchaser:</strong> ' . $me->fullname . '</p>
+                                            <p>A ticket has been purchased for your event:</p>
+                                            <p><strong>Event:</strong> ' . $event->event_title . '</p>
+                                            <p><strong>Purchased By:</strong> ' . $me->first_name . ' ' . $me->last_name . '</p>
                                             <p><strong>Ticket Type:</strong> ' . $register->ticket_type . '</p>
                                             <p><strong>Ticket Quantity:</strong> ' . $register->ticket_quantity . '</p>
                                             <p><strong>Total Cost:</strong> #' . ($register->ticket_cost * $register->ticket_quantity) . '</p>
-                                            <p><strong>Ticket Code:</strong> ' . $register->ticket_code . '</p>
-                                            <p>Thank you for hosting this event, and we hope it will be a great success!</p>
+                                            <p>Please check your dashboard for more details.</p>
                                         </div>
                                         <div class="footer">
                                             <p>Best regards,</p>
@@ -365,6 +326,7 @@ class RegisterController extends Controller
             ], 500);
         }
     }
+
 
 
 
